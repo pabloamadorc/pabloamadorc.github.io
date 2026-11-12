@@ -154,6 +154,21 @@
     .player iframe { display: block; width: 100%; height: 152px; border: 0; }
 
     footer { margin-top: 22px; font-size: 13px; color: var(--muted); text-align: center; }
+    /* research */
+    .research { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--edge); }
+    .paper { display: grid; gap: 14px; }
+    .paper figure { margin: 0; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--edge); }
+    .paper figure a { display: block; }
+    .paper img { display: block; width: 100%; max-height: 300px; object-fit: contain; background: #fff; }
+    .paper h3 { margin: 0; font-size: 17px; line-height: 1.35; font-weight: 600; }
+    .paper h3 a { color: var(--text); text-decoration: none; }
+    .paper h3 a:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+    .paper .meta { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+    .paper .tldr { margin: 0; }
+    .paper .tldr b { color: var(--accent); font-weight: 600; }
+    .counter { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 8px; }
+    .research-head-right { display: flex; align-items: center; }
+
     /* where's Pablo */
     .where { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--edge); }
     .where-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
@@ -199,6 +214,20 @@
     </p>
 
     <ul class="links" id="links"></ul>
+
+    <section class="research" aria-labelledby="research-title">
+      <div class="now-head">
+        <div class="now-title" id="research-title">Research</div>
+        <div class="research-head-right">
+          <span class="counter" id="paper-count"></span>
+          <button class="shuffle" id="next-paper" type="button" aria-label="Show another paper">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+            Another one
+          </button>
+        </div>
+      </div>
+      <article class="paper" id="paper" aria-live="polite"></article>
+    </section>
 
     <section class="where" aria-labelledby="where-title">
       <div class="where-head">
@@ -260,6 +289,58 @@
       li.innerHTML = `<a href="${href}" ${key === "email" ? "" : 'target="_blank" rel="noopener"'}><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg>${label}</a>`;
       ul.appendChild(li);
     }
+
+    // ---- research -----------------------------------------------------------
+    // fig: image in assets/research/ · doi: without https://doi.org/
+    const PAPERS = [
+      { title: "Looking beyond the surface: Understanding the role of multiple stressors on the eutrophication status of the Albufera Lake",
+        authors: "Amador, Soria, Moratalla-López & Rico", journal: "Science of the Total Environment", year: 2024,
+        doi: "10.1016/j.scitotenv.2024.177247", fig: "looking.webp",
+        tldr: "We dug up 50 years of Albufera data and threw GAMs at it. The lake is ~2 °C warmer, phosphorus dropped a lot, and yet the water is still pea soup. Temperature, water scarcity and nitrate call the shots, and most stressors actually cancel each other out (antagonism, not synergy)." },
+      { title: "Effects of the fungicide azoxystrobin in two habitats representative of Mediterranean coastal wetlands: A mesocosm experiment",
+        authors: "Amador et al.", journal: "Aquatic Toxicology", year: 2024,
+        doi: "10.1016/j.aquatox.2023.106828", fig: "azoxy.webp",
+        tldr: "We dosed mesocosms mimicking a clear spring and a green eutrophic lake with a rice fungicide. Both were sensitive below 2 µg/L, but different critters paid the price: in the springs, amphipods and the endemic shrimp Dugastella valentina crashed; in the lake, zooplankton and chironomids. Moral: habitat matters." },
+      { title: "Thinking big! Landscape-scale evaluation of pesticide pollution and ecological risks in a protected Mediterranean wetland",
+        authors: "Amador, Gherardi, Fuentes-Edfuf, Martínez-Megías & Rico", journal: "Environmental Pollution", year: 2025,
+        doi: "10.1016/j.envpol.2025.126918", fig: "thinking.webp",
+        tldr: "We chained three models (hydrology, rice paddies and lake hydrodynamics) to follow 8 pesticides across the Albufera for 10 years. In the paddies, mixtures could hit over 22% of species; in the lake, cocktails of up to five pesticides put chronic risk on 40% of species. Looking at one pesticide at a time misses the plot." },
+      { title: "ERAHUMED: An integrated modeling platform for the landscape-level ecological risk assessment of pesticides used in rice-farming systems",
+        authors: "Gherardi, Amador & Rico", journal: "Integrated Environmental Assessment and Management", year: 2026,
+        doi: "10.1093/inteam/vjag139", fig: "erahumed.webp",
+        tldr: "An R package (with a Shiny app, so no excuses) that simulates water, rice management and pesticide fate across the whole Albufera landscape. Swap application schemes or throw a weird weather year at it and see how the risks change downstream." },
+      { title: "Effects of the herbicide bentazone on the structure of plankton and benthic communities representative of Mediterranean coastal wetlands: a mesocosm experiment",
+        authors: "Grillo-Avila, …, Amador, … & Rico", journal: "Hydrobiologia", year: 2024,
+        doi: "10.1007/s10750-024-05779-w", fig: "bentazone.webp",
+        tldr: "Four weekly doses of a rice herbicide, in mesocosms with and without macrophytes. Benthic diatoms took the biggest hit, and zooplankton followed through the food web: big filter feeders were swapped for small ones. A bottom-up domino effect at field-relevant concentrations." },
+      { title: "Impacts of the 2024 flash flood on water quality, pathogenic bacteria and organic contaminant risks in the Albufera Natural Park (Valencia, Spain)",
+        authors: "Rico, …, Amador & Camacho", journal: "Environmental Research", year: 2026,
+        doi: "10.1016/j.envres.2025.123515", fig: "flood.webp",
+        tldr: "After the October 2024 flood we sampled 15 sites for 241 contaminants plus pathogens. Pharmaceuticals, PFAS, PAHs and flame retardants all went up, mostly in the north-west of the park, with ibuprofen, PFOS and fluoranthene well above safe thresholds. Floods don't just bring water." },
+      { title: "Exploring the role of a Mediterranean transhumance drove road as shelter for amphibian breeding",
+        authors: "Arnanz, Alcorlo, Amador, Azcárate, Llusia & Hevia", journal: "Anthropocene", year: 2025,
+        doi: "10.1016/j.ancene.2025.100469", fig: "canadas.webp",
+        tldr: "Along the Cañada Real Conquense, the old livestock route, ponds and troughs keep far more working water bodies than the farmland around them, and frogs, toads and newts love that. Ponds are best, but a trough with a ramp and some mud is a decent backup home." }
+    ];
+    // -------------------------------------------------------------------------
+
+    const paperBox = document.getElementById("paper");
+    let paperIdx = Math.floor(Math.random() * PAPERS.length);
+    function showPaper() {
+      const p = PAPERS[paperIdx];
+      const url = "https://doi.org/" + p.doi;
+      paperBox.innerHTML = `
+        <figure><a href="assets/research/${p.fig}" target="_blank" rel="noopener"><img src="assets/research/${p.fig}" alt="Figure from: ${p.title}" loading="lazy"></a></figure>
+        <div><h3><a href="${url}" target="_blank" rel="noopener">${p.title}</a></h3>
+        <p class="meta">${p.authors} · <i>${p.journal}</i> · ${p.year}</p></div>
+        <p class="tldr"><b>TL;DR</b> ${p.tldr}</p>`;
+      document.getElementById("paper-count").textContent = `${paperIdx + 1}/${PAPERS.length}`;
+    }
+    document.getElementById("next-paper").addEventListener("click", () => {
+      paperIdx = (paperIdx + 1) % PAPERS.length;
+      showPaper();
+    });
+    showPaper();
 
     // ---- where's Pablo ------------------------------------------------------
     // Rules are checked in order; the first that matches the current time in Valencia wins.
