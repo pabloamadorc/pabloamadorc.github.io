@@ -115,6 +115,8 @@
     }
     .about { margin: 24px 0 0; color: var(--muted); }
     .about b { color: var(--text); font-weight: 500; }
+    .about + .about { margin-top: 12px; }
+    .about a { color: var(--accent); font-weight: 500; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 
     .links { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
     .links a {
@@ -207,10 +209,22 @@
     </header>
 
     <p class="about">
-      <b>Postdoctoral researcher</b> in aquatic ecology and ecotoxicology at the
+      I am a <b>postdoctoral researcher</b> in aquatic ecology and ecotoxicology at the
       Cavanilles Institute of Biodiversity and Evolutionary Biology, University of Valencia.
       I combine data analysis and modelling to study how environmental pressures reshape
       the biodiversity and functioning of aquatic ecosystems, from plankton to fish.
+    </p>
+    <p class="about">
+      I am currently hired by the <a href="https://github.com/STABLE-uv">STABLE project</a>,
+      which tests whether aquatic ecosystems resist and recover from chemical pollution in the same way
+      in boreal, Mediterranean and tropical climates. My job there is the data side: turning mesocosm
+      experiments into measures of resistance, resilience, recovery and invariability, and modelling what drives them.
+    </p>
+    <p class="about">
+      I also do a good part of my research at the Albufera, from the
+      <a href="https://www.uv.es/uvweb/instituto-universitario-cavanilles-biodiversidad-biologia-evolutiva/es/estacion-biologica-albufera/estacion/estacion-biologica-albufera-1286408951221.html">Albufera Biological Station</a>,
+      where I have worked on a bit of everything: long-term time series, ecological risk assessment
+      and trait-based ecology.
     </p>
 
     <ul class="links" id="links"></ul>
@@ -333,7 +347,7 @@
         <figure><a href="assets/research/${p.fig}" target="_blank" rel="noopener"><img src="assets/research/${p.fig}" alt="Figure from: ${p.title}" loading="lazy"></a></figure>
         <div><h3><a href="${url}" target="_blank" rel="noopener">${p.title}</a></h3>
         <p class="meta">${p.authors} · <i>${p.journal}</i> · ${p.year}</p></div>
-        <p class="tldr"><b>TL;DR</b> ${p.tldr}</p>`;
+        <p class="tldr">${p.tldr}</p>`;
       document.getElementById("paper-count").textContent = `${paperIdx + 1}/${PAPERS.length}`;
     }
     document.getElementById("next-paper").addEventListener("click", () => {
