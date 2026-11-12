@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pablo Amador</title>
+  <meta name="description" content="Pablo Amador — aquatic ecologist and ecotoxicologist at the University of Valencia. Average wetland enjoyer.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐟</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
+  <style>
+    :root {
+      --bg: #eef3ef;
+      --fish-alpha: 0.42;
+      --card: rgba(255, 255, 255, 0.86);
+      --edge: rgba(31, 61, 54, 0.12);
+      --text: #17302a;
+      --muted: #55706a;
+      --accent: #2f7d6c;
+      --accent-soft: rgba(47, 125, 108, 0.12);
+      --shadow: 0 18px 50px -24px rgba(23, 48, 42, 0.35);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0e1715;
+        --fish-alpha: 0.22;
+        --card: rgba(20, 31, 28, 0.86);
+        --edge: rgba(160, 210, 195, 0.14);
+        --text: #e4efeb;
+        --muted: #93aca5;
+        --accent: #6cc7b1;
+        --accent-soft: rgba(108, 199, 177, 0.14);
+        --shadow: 0 18px 50px -24px rgba(0, 0, 0, 0.7);
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #0e1715;
+      --fish-alpha: 0.22;
+      --card: rgba(20, 31, 28, 0.86);
+      --edge: rgba(160, 210, 195, 0.14);
+      --text: #e4efeb;
+      --muted: #93aca5;
+      --accent: #6cc7b1;
+      --accent-soft: rgba(108, 199, 177, 0.14);
+      --shadow: 0 18px 50px -24px rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 48px 16px;
+      overflow-x: hidden;
+    }
+
+    /* the fish of the Albufera, in colour, drifting slowly */
+    .school {
+      position: fixed;
+      inset: -700px;
+      background: url("assets/peixos-color.webp") 0 0 / 700px 700px repeat;
+      opacity: var(--fish-alpha);
+      animation: swim 160s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes swim { to { transform: translate(700px, 0); } }
+    @media (prefers-reduced-motion: reduce) { .school { animation: none; } }
+
+    main {
+      position: relative;
+      z-index: 1;
+      width: min(560px, 100%);
+      background: var(--card);
+      border: 1px solid var(--edge);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 40px 36px 32px;
+      -webkit-backdrop-filter: blur(6px);
+              backdrop-filter: blur(6px);
+    }
+    @media (max-width: 480px) { main { padding: 32px 22px 24px; } }
+
+    .hello { display: flex; gap: 20px; align-items: center; }
+    .avatar {
+      width: 88px; height: 88px; flex: none;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--accent);
+    }
+    h1 {
+      font-family: Fraunces, Georgia, serif;
+      font-weight: 600;
+      font-size: clamp(30px, 7vw, 38px);
+      line-height: 1.1;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+    .bio {
+      display: inline-block;
+      margin: 0;
+      padding: 2px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 500;
+      font-size: 15px;
+    }
+    .about { margin: 24px 0 0; color: var(--muted); }
+    .about b { color: var(--text); font-weight: 500; }
+
+    .links { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
+    .links a {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 14px;
+      border: 1px solid var(--edge);
+      border-radius: 999px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px; font-weight: 500;
+      transition: border-color .15s, background .15s;
+    }
+    .links a:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .links svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .now { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--edge); }
+    .now-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .now-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    }
+    .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+    .eq i { width: 3px; background: var(--accent); border-radius: 2px; animation: eq 1s ease-in-out infinite; }
+    .eq i:nth-child(2) { animation-delay: -.35s; }
+    .eq i:nth-child(3) { animation-delay: -.7s; }
+    @keyframes eq { 0%, 100% { height: 4px; } 50% { height: 14px; } }
+    @media (prefers-reduced-motion: reduce) { .eq i { animation: none; height: 10px; } }
+    .shuffle {
+      display: inline-flex; align-items: center; gap: 6px;
+      border: 1px solid var(--edge); background: transparent; color: var(--muted);
+      font: 500 13px Inter, system-ui, sans-serif;
+      padding: 5px 11px; border-radius: 999px; cursor: pointer;
+    }
+    .shuffle:hover { color: var(--accent); border-color: var(--accent); }
+    .shuffle svg { width: 14px; height: 14px; fill: currentColor; }
+    .player { border-radius: 12px; overflow: hidden; min-height: 152px; background: var(--accent-soft); }
+    .player iframe { display: block; width: 100%; height: 152px; border: 0; }
+
+    footer { margin-top: 22px; font-size: 13px; color: var(--muted); text-align: center; }
+    /* where's Pablo */
+    .where { margin-top: 30px; padding-top: 22px; border-top: 1px solid var(--edge); }
+    .where-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .clock { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .map { height: 230px; border-radius: 12px; overflow: hidden; background: var(--accent-soft); border: 1px solid var(--edge); }
+    .map .leaflet-control-attribution { font-size: 10px; background: var(--card); color: var(--muted); }
+    .map .leaflet-control-attribution a { color: var(--muted); }
+    .whereabouts { margin: 12px 0 0; display: flex; gap: 10px; align-items: flex-start; }
+    .whereabouts .pin { flex: none; width: 10px; height: 10px; margin-top: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .whereabouts b { font-weight: 600; }
+    .whereabouts small { display: block; color: var(--muted); font-size: 13px; }
+    .dot { position: relative; width: 18px; height: 18px; }
+    .dot::before, .dot::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--accent); }
+    .dot::before { border: 3px solid var(--card); }
+    .dot::after { animation: ping 2s ease-out infinite; opacity: .5; }
+    @keyframes ping { to { transform: scale(3.2); opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .dot::after { animation: none; opacity: 0; } }
+  </style>
+</head>
+<body>
+  <div class="school" aria-hidden="true"></div>
+
+  <main>
+    <header class="hello">
+      <img class="avatar" src="assets/pablo.jpg" alt="Pablo Amador">
+      <div>
+        <h1>Pablo Amador</h1>
+        <p class="bio">average wetland enjoyer</p>
+      </div>
+    </header>
+
+    <p class="about">
+      <b>Postdoctoral researcher</b> in aquatic ecology and ecotoxicology at the
+      Cavanilles Institute of Biodiversity and Evolutionary Biology, University of Valencia.
+      I combine data analysis and modelling to study how environmental pressures reshape
+      the biodiversity and functioning of aquatic ecosystems, from plankton to fish.
+    </p>
+
+    <ul class="links" id="links"></ul>
+
+    <section class="where" aria-labelledby="where-title">
+      <div class="where-head">
+        <div class="now-title" id="where-title">Where's Pablo?</div>
+        <span class="clock" id="clock"></span>
+      </div>
+      <div class="map" id="map" role="img" aria-label="Map showing where Pablo probably is right now"></div>
+      <p class="whereabouts"><span class="pin" aria-hidden="true"></span><span><b id="place">…</b><small id="why"></small></span></p>
+    </section>
+
+    <section class="now" aria-labelledby="now-title">
+      <div class="now-head">
+        <div class="now-title" id="now-title"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Now playing</div>
+        <button class="shuffle" id="shuffle" type="button" aria-label="Play another song">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+          Another one
+        </button>
+      </div>
+      <div class="player" id="player"></div>
+    </section>
+
+    <footer>Valencia · somewhere between the reeds</footer>
+  </main>
+
+  <script>
+    // ---- edit here --------------------------------------------------------
+    // Spotify track ids (the part after /track/ in the share link)
+    const TRACKS = [
+      "2tdNTV4xpZgiom27mENc2N", "5cbDTZG8lBJqVVa2zqROPI", "4L5exQWqXpzBy7Bhy2nrEk",
+      "4Og0uXMYqouN7xOQ7u8jiW", "35GXIb8Bgfro3dELpItLPc", "371H6HjS4SXGbQ9IVfFUIL",
+      "5U1MVqAfPoLPKllKr0WaRT", "06ttEtNvfgxJPtn6BgOOUQ", "2NNbCSlcJaex6ZJaQdlatN",
+      "19YKaevk2bce4odJkP5L22", "4JdoNXs8MyxoovRv4g9udm", "5CToP4zkykujDhW9841aGO",
+      "2qtoRFCOEL1gRn5q9DJC7F", "5k8LB57xOq8UUNVaKWSqrf", "7eqoqGkKwgOaWNNHx90uEZ",
+      "2MF4HtZHBoUliOi9nOAbS0", "0RxSL5kjZXO45l38vVerNO"
+    ];
+    // Leave a link empty ("") to hide it
+    const LINKS = {
+      github:  "https://github.com/pabloamadorc",
+      stable:  "https://github.com/STABLE-uv",
+      orcid:   "",
+      scholar: "",
+      email:   ""
+    };
+    // -----------------------------------------------------------------------
+
+    const ICONS = {
+      github:  ['GitHub', '<path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.2-3.1-.1-.4-.5-1.6.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.2 1.9 1.2 3.1 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/>'],
+      stable:  ['STABLE project', '<path d="M2 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2v2c-2 0-2 2-4 2s-2-2-4-2-2 2-4 2-2-2-4-2-2 2-4 2zm0-5c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2v2c-2 0-2 2-4 2s-2-2-4-2-2 2-4 2-2-2-4-2-2 2-4 2z"/>'],
+      orcid:   ['ORCID', '<path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24zM7.4 17.5H5.9V7.4h1.5v10.1zM6.6 6.3a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm4 11.2V7.4h4c3.9 0 5.5 2.7 5.5 5.1 0 2.6-2 5-5.5 5h-4zm1.5-1.4h2.4c3.4 0 4.1-2.5 4.1-3.6 0-1.8-1.1-3.7-4.2-3.7h-2.3v7.3z"/>'],
+      scholar: ['Google Scholar', '<path d="M12 2 1 9l4 2.2V17h2v-4.7L12 15l11-6-11-7zm-5 12.3V17c0 1.7 2.2 3 5 3s5-1.3 5-3v-2.7l-5 2.7-5-2.7z"/>'],
+      email:   ['Email', '<path d="M2 5h20v14H2V5zm2 2v.5l8 5 8-5V7H4zm16 2.8-8 5-8-5V17h16V9.8z"/>']
+    };
+    const ul = document.getElementById("links");
+    for (const [key, url] of Object.entries(LINKS)) {
+      if (!url) continue;
+      const [label, path] = ICONS[key];
+      const li = document.createElement("li");
+      const href = key === "email" && !url.startsWith("mailto:") ? "mailto:" + url : url;
+      li.innerHTML = `<a href="${href}" ${key === "email" ? "" : 'target="_blank" rel="noopener"'}><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg>${label}</a>`;
+      ul.appendChild(li);
+    }
+
+    // ---- where's Pablo ------------------------------------------------------
+    // Rules are checked in order; the first that matches the current time in Valencia wins.
+    // days: 1 = Monday ... 7 = Sunday · from/to: hours (to is exclusive; to < from crosses midnight)
+    // When a rule has several places, one is picked at random on each visit.
+    const PLACES = {
+      icbibe:   { name: "Working hard or hardly working?",       area: "ICBiBE, Paterna",           lat: 39.5133, lon: -0.4229, zoom: 14 },
+      turia:    { name: "Rescuing a cat from a tree",            area: "Jardí del Túria, Valencia",  lat: 39.4783, lon: -0.3720, zoom: 15 },
+      pinedo:   { name: "Feelings wobbling, staring at the sea", area: "Platja de Pinedo, Valencia", lat: 39.4235, lon: -0.3335, zoom: 14 },
+      valencia: { name: "Somewhere in Valencia",                 area: "Valencia city",              lat: 39.4699, lon: -0.3763, zoom: 12 },
+      lavapies: { name: "Probably drinking vermut",              area: "Lavapiés, Madrid",           lat: 40.4089, lon: -3.7010, zoom: 15 },
+      carmen:   { name: "Probably drinking vermut",              area: "El Carmen, Valencia",        lat: 39.4775, lon: -0.3800, zoom: 15 }
+    };
+    const SCHEDULE = [
+      { days: [1, 2, 3, 4, 5], from: 7,  to: 17, places: ["icbibe"],             why: "weekdays, 7:00–17:00" },
+      { days: [1, 2, 3, 4, 5], from: 17, to: 21, places: ["turia", "pinedo"],    why: "weekday afternoons, 17:00–21:00" },
+      { days: [1, 2, 3, 4, 5], from: 21, to: 7,  places: ["valencia"],           why: "weekday nights" },
+      { days: [1],             from: 0,  to: 7,  places: ["valencia"],           why: "weekday nights" },
+      { days: [6, 7],          from: 0,  to: 24, places: ["lavapies", "carmen"], why: "weekends" }
+    ];
+    // -------------------------------------------------------------------------
+
+    function valenciaNow() {
+      const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/Madrid", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+      }).formatToParts(new Date()).map(p => [p.type, p.value]));
+      const day = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(parts.weekday) + 1;
+      return { day, hour: +parts.hour, label: `${parts.weekday} ${parts.hour}:${parts.minute} in Valencia` };
+    }
+    function matches(rule, day, hour) {
+      if (rule.from < rule.to) return rule.days.includes(day) && hour >= rule.from && hour < rule.to;
+      if (hour >= rule.from) return rule.days.includes(day);            // evening part
+      const yesterday = day === 1 ? 7 : day - 1;                          // after-midnight part belongs to the day before
+      return hour < rule.to && rule.days.includes(yesterday);
+    }
+    function whereNow() {
+      const t = valenciaNow();
+      const rule = SCHEDULE.find(r => matches(r, t.day, t.hour));
+      if (!rule) return { t, place: { name: "Off the map", area: "probably in a wetland somewhere", lat: 39.33, lon: -0.35, zoom: 11 }, why: "" };
+      const key = rule.places[Math.floor(Math.random() * rule.places.length)];
+      return { t, place: PLACES[key], why: rule.why };
+    }
+
+    const here = whereNow();
+    document.getElementById("clock").textContent = here.t.label;
+    document.getElementById("place").textContent = here.place.name;
+    document.getElementById("why").textContent = here.place.area + (here.why ? " · " + here.why : "");
+
+    window.addEventListener("load", () => {
+      if (!window.L) return;
+      const dark = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() === "#0e1715";
+      const map = L.map("map", { zoomControl: false, scrollWheelZoom: false, attributionControl: true })
+        .setView([40.0, -2.2], 6);
+      L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? "dark_all" : "light_all"}/{z}/{x}/{y}{r}.png`, {
+        subdomains: "abcd", maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      }).addTo(map);
+      const icon = L.divIcon({ className: "", html: '<div class="dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
+      const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      setTimeout(() => {
+        map.flyTo([here.place.lat, here.place.lon], here.place.zoom, { duration: reduce ? 0 : 2.4 });
+        map.once("moveend", () => L.marker([here.place.lat, here.place.lon], { icon, keyboard: false }).addTo(map));
+      }, reduce ? 0 : 500);
+    });
+
+    // a different song on every visit (and never the same one twice in a row)
+    const player = document.getElementById("player");
+    let last = null;
+    try { last = sessionStorage.getItem("lastTrack"); } catch (e) {}
+    function play() {
+      const pool = TRACKS.length > 1 ? TRACKS.filter(t => t !== last) : TRACKS;
+      const id = pool[Math.floor(Math.random() * pool.length)];
+      last = id;
+      try { sessionStorage.setItem("lastTrack", id); } catch (e) {}
+      player.innerHTML = `<iframe title="Spotify player" src="https://open.spotify.com/embed/track/${id}?utm_source=generator&theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
+    }
+    document.getElementById("shuffle").addEventListener("click", play);
+    play();
+  </script>
+</body>
+</html>
