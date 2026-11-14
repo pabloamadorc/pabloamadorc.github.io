@@ -168,6 +168,9 @@
     .paper .meta { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
     .paper .tldr { margin: 0; }
     .paper .tldr b { color: var(--accent); font-weight: 600; }
+    .paper .mood { margin: 0; font-style: italic; color: var(--accent); font-weight: 500; }
+    .paper .mood::before { content: "“"; }
+    .paper .mood::after { content: "”"; }
     .counter { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 8px; }
     .research-head-right { display: flex; align-items: center; }
 
@@ -241,6 +244,17 @@
         </div>
       </div>
       <article class="paper" id="paper" aria-live="polite"></article>
+    </section>
+
+    <section class="research reads" aria-labelledby="reads-title">
+      <div class="now-head">
+        <div class="now-title" id="reads-title">Recent reads</div>
+        <button class="shuffle" id="next-read" type="button" aria-label="Show another paper">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+          Another one
+        </button>
+      </div>
+      <article class="paper" id="read" aria-live="polite"></article>
     </section>
 
     <section class="where" aria-labelledby="where-title">
@@ -355,6 +369,86 @@
       showPaper();
     });
     showPaper();
+
+    // ---- recent reads -------------------------------------------------------
+    // Each visit (and each click) picks a random paper and a random mood line.
+    const READS = [
+      { title: "Species sensitivity to toxic substances: evolution, ecology and applications",
+        authors: "Spurgeon et al.", journal: "Frontiers in Environmental Science", year: 2020, doi: "10.3389/fenvs.2020.588380", fig: "spurgeon2020.webp" },
+      { title: "Sensitivity assessment of freshwater macroinvertebrates to pesticides using biological traits",
+        authors: "Ippolito, Todeschini & Vighi", journal: "Ecotoxicology", year: 2012, doi: "10.1007/s10646-011-0795-x", fig: "ippolito2012.webp" },
+      { title: "Cross-species extrapolation of chemical sensitivity",
+        authors: "van den Berg, Maltby, Sinclair, Liang & van den Brink", journal: "Science of the Total Environment", year: 2021, doi: "10.1016/j.scitotenv.2020.141800", fig: "vandenberg2021.webp" },
+      { title: "The use of diagnostic tools to assess the risks of chemicals to freshwater ecosystems: towards a unified evaluation framework",
+        authors: "Rico et al.", journal: "Environmental Management", year: 2025, doi: "10.1007/s00267-025-02265-4", fig: "rico2025.webp" },
+      { title: "Evaluating aquatic invertebrate vulnerability to insecticides based on intrinsic sensitivity, biological traits and toxic mode of action",
+        authors: "Rico & van den Brink", journal: "Environmental Toxicology and Chemistry", year: 2015, doi: "10.1002/etc.3008", fig: "rico2015.webp" },
+      { title: "Calibrating predicted mixture toxic pressure to observed biodiversity loss in aquatic ecosystems",
+        authors: "Oginah, Posthuma, Slootweg, Hauschild & Fantke", journal: "Global Change Biology", year: 2025, doi: "10.1111/gcb.70305", fig: "oginah2025.webp" },
+      { title: "Unraveling contaminant effects on biodiversity across spatial, temporal, and biological scales: the macroecotoxicology perspective",
+        authors: "Moulatlet, Capparelli, Truchet, Rico & Villalobos", journal: "Environmental Science & Technology", year: 2026, doi: "10.1021/acs.est.6c05561", fig: "moulatlet2026.webp" },
+      { title: "Using phylogenetic information and chemical properties to predict species tolerances to pesticides",
+        authors: "Guénard, von der Ohe, Walker, Lek & Legendre", journal: "Proceedings of the Royal Society B", year: 2014, doi: "10.1098/rspb.2013.3239", fig: "guenard2014.webp" },
+      { title: "A new method for ranking mode-specific sensitivity of freshwater arthropods to insecticides and its relationship to biological traits",
+        authors: "Rubach, Baird & van den Brink", journal: "Environmental Toxicology and Chemistry", year: 2010, doi: "10.1002/etc.55", fig: "rubach2010.webp" },
+      { title: "Improving the ecotoxicological hazard assessment of chemicals by pairwise learning",
+        authors: "Posthuma, Price & Viljanen", journal: "Environmental Science & Technology", year: 2025, doi: "10.1021/acs.est.5c01289", fig: "posthuma2025.webp" },
+      { title: "Bio-QSARs 2.0: unlocking a new level of predictive power for machine learning-based ecotoxicity predictions by exploiting chemical and biological information",
+        authors: "Zubrod, Galic, Vaugeois & Dreier", journal: "Environment International", year: 2024, doi: "10.1016/j.envint.2024.108607", fig: "zubrod2024.webp" },
+      { title: "Ecological recovery potential of freshwater organisms: consequences for environmental risk assessment of chemicals",
+        authors: "Gergs et al.", journal: "Reviews of Environmental Contamination and Toxicology", year: 2016, doi: "10.1007/978-3-319-20013-2_5", fig: "gergs2016.webp" },
+      { title: "Integrating chemical fate and population-level effect models for pesticides at landscape scale: new options for risk assessment",
+        authors: "Focks, ter Horst, van den Berg, Baveco & van den Brink", journal: "Ecological Modelling", year: 2014, doi: "10.1016/j.ecolmodel.2013.09.023", fig: "focks2014.webp" },
+      { title: "Modeling the sensitivity of aquatic macroinvertebrates to chemicals using traits",
+        authors: "Van den Berg et al.", journal: "Environmental Science & Technology", year: 2019, doi: "10.1021/acs.est.9b00893", fig: "vandenberg2019.webp" },
+      { title: "On the dimensionality of ecological stability",
+        authors: "Donohue et al.", journal: "Ecology Letters", year: 2013, doi: "10.1111/ele.12086", fig: "donohue2013.webp" },
+      { title: "Decomposing multiple dimensions of stability in global change experiments",
+        authors: "Hillebrand, Langenheder, Lebret, Lindström, Östman & Striebel", journal: "Ecology Letters", year: 2018, doi: "10.1111/ele.12867", fig: "hillebrand2017.webp" },
+      { title: "Effects of multiple stressors on the dimensionality of ecological stability",
+        authors: "Polazzo & Rico", journal: "Ecology Letters", year: 2021, doi: "10.1111/ele.13770", fig: "polazzo2021.webp" },
+      { title: "Understanding ecological complexity in a chemical stress context: a reflection on recolonization, recovery, and adaptation of aquatic populations and communities",
+        authors: "Bundschuh, Mesquita-Joanes, Rico & Camacho", journal: "Environmental Toxicology and Chemistry", year: 2023, doi: "10.1002/etc.5677", fig: "bundschuh2023.webp" },
+      { title: "estar: an R package to measure ecological stability",
+        authors: "Figueiredo et al.", journal: "Methods in Ecology and Evolution", year: 2026, doi: "10.1111/2041-210x.70265", fig: "figueiredo2026.webp" }
+    ];
+    const MOODS = [
+      "Seeing what I can scrape from here",
+      "Reading it for the third time, pretending it's the first",
+      "Highlighter running out of ink",
+      "Will cite. Probably twice",
+      "Currently stealing ideas (with proper citation)",
+      "Supplementary material is where the real story is",
+      "Opened 14 tabs because of the reference list",
+      "Read the abstract, stared at Figure 1, made a coffee",
+      "Nodding seriously at the figures",
+      "This one lives permanently on my desktop",
+      "Wish I'd written this one",
+      "Trying to reproduce Figure 2 in R. Wish me luck",
+      "Annotated so much the PDF is now 40% comments",
+      "Printed it. Yes, on actual paper",
+      "Sending this one to the whole lab",
+      "Figure 1 alone was worth the read",
+      "Adding it to the 'read again in June' folder",
+      "Ideas brewing, coffee too"
+    ];
+    // -------------------------------------------------------------------------
+
+    const readBox = document.getElementById("read");
+    const pick = (arr, not) => { const pool = arr.length > 1 ? arr.filter(x => x !== not) : arr; return pool[Math.floor(Math.random() * pool.length)]; };
+    let lastRead = null, lastMood = null;
+    function showRead() {
+      const r = pick(READS, lastRead), m = pick(MOODS, lastMood);
+      lastRead = r; lastMood = m;
+      const url = "https://doi.org/" + r.doi;
+      readBox.innerHTML = `
+        <p class="mood">${m}</p>
+        <figure><a href="assets/reads/${r.fig}" target="_blank" rel="noopener"><img src="assets/reads/${r.fig}" alt="Figure from: ${r.title}" loading="lazy"></a></figure>
+        <div><h3><a href="${url}" target="_blank" rel="noopener">${r.title}</a></h3>
+        <p class="meta">${r.authors} · <i>${r.journal}</i> · ${r.year}</p></div>`;
+    }
+    document.getElementById("next-read").addEventListener("click", showRead);
+    showRead();
 
     // ---- where's Pablo ------------------------------------------------------
     // Rules are checked in order; the first that matches the current time in Valencia wins.
